@@ -13,6 +13,11 @@ use App\Http\Requests\{LoginRequest, RegisterRequest};
 
 class AuthController extends Controller
 {
+    /**
+     * To initialize class objects/variables.
+     *
+     * @param AuthService $authService
+     */
     public function __construct(private AuthService $authService)
     {
     }
@@ -21,7 +26,6 @@ class AuthController extends Controller
      * Registers new user.
      *
      * @param RegisterRequest $request
-     * @param AuthService $authService
      * @return JsonResponse
      * @throws Exception
      */

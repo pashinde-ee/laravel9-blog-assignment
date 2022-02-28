@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,6 +20,7 @@ class Post extends Model
      * @var array<string>
      */
     protected $fillable = [
+        'user_id',
         'title',
         'body',
     ];
@@ -41,5 +43,13 @@ class Post extends Model
     public function media(): MorphMany
     {
         return $this->morphMany(Media::class, 'entity');
+    }
+
+    public function user(): Attribute
+    {
+        dd('asdf');
+        return new Attribute(
+            set: fn ($value) => auth()->user()->id,
+        );
     }
 }
