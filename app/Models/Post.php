@@ -44,12 +44,4 @@ class Post extends Model
     {
         return $this->morphMany(Media::class, 'entity');
     }
-
-    public function user(): Attribute
-    {
-        dd('asdf');
-        return new Attribute(
-            set: fn ($value) => auth()->user()->id,
-        );
-    }
 }
