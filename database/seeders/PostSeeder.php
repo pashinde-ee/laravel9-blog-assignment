@@ -4,20 +4,19 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Models\Post;
 use Illuminate\Database\Seeder;
 
-class DatabaseSeeder extends Seeder
+class PostSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
+     * Run the database seeds.
      *
      * @return void
      */
     public function run(): void
     {
-        $this->call([
-            UserSeeder::class,
-            PostSeeder::class,
-        ]);
+        Post::unsetEventDispatcher();
+        Post::factory()->count(10)->create();
     }
 }
