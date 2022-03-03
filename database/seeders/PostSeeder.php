@@ -16,6 +16,7 @@ class PostSeeder extends Seeder
      */
     public function run(): void
     {
+        Post::unsetEventDispatcher();
         Post::factory()->count(10)->create();
     }
 }

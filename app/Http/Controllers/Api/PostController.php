@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Resources\PostResource;
 use App\Models\Post;
-use App\Services\PostService;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
+use Illuminate\Support\Arr;
 use App\Http\Controllers\Controller;
+use App\Services\{MediaService, PostService};
+use Illuminate\Http\{JsonResponse, Response};
+use App\Http\Resources\{PostDetailsResource, PostResource};
 use App\Http\Requests\{StorePostRequest, UpdatePostRequest};
 
 class PostController extends Controller
@@ -45,7 +45,10 @@ class PostController extends Controller
      */
     public function store(StorePostRequest $request): JsonResponse
     {
-        return $this->postService->create($request->validated())
+        return $this->postService->create(
+            Arr::except($request->validated(), 'image'),
+            $request->file('image')
+        )
             ? response()->json('', Response::HTTP_CREATED)
             : response()->json('', Response::HTTP_INTERNAL_SERVER_ERROR);
     }
@@ -54,12 +57,15 @@ class PostController extends Controller
      * Display the specified resource.
      *
      * @param Post $post
+     * @param MediaService $mediaService
      * @return JsonResponse
      */
-    public function show(Post $post): JsonResponse
+    public function show(Post $post, MediaService $mediaService): JsonResponse
     {
+        $mediaService->prepareMediaUrl($post->media);
+
         return response()->json(
-            new PostResource($post)
+            new PostDetailsResource($post)
         );
     }
 
@@ -72,7 +78,11 @@ class PostController extends Controller
      */
     public function update(UpdatePostRequest $request, Post $post): JsonResponse
     {
-        return $this->postService->update($request->validated(), $post)
+        return $this->postService->update(
+            $post,
+            Arr::except($request->validated(), 'image'),
+            $request->file('image')
+        )
             ? response()->json()
             : response()->json('', Response::HTTP_INTERNAL_SERVER_ERROR);
     }

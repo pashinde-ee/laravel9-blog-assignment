@@ -1,7 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Providers;
 
+use App\Services\Contracts\FileManagerInterface;
+use App\Services\S3FileManagerService;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -11,9 +16,14 @@ class AppServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function register()
+    public function register(): void
     {
-        //
+        $this->app->bind(
+            FileManagerInterface::class,
+            function () {
+                return new S3FileManagerService();
+            }
+        );
     }
 
     /**
@@ -21,8 +31,10 @@ class AppServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function boot()
+    public function boot(): void
     {
-        //
+        Relation::enforceMorphMap([
+            'post' => 'App\Models\Post',
+        ]);
     }
 }

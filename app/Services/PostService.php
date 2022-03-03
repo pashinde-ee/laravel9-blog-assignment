@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use Exception;
 use App\Models\Post;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use App\Repositories\PostRepository;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Model;
 
 class PostService
 {
@@ -15,8 +17,9 @@ class PostService
      * To initialize class objects/variables.
      *
      * @param PostRepository $postRepository
+     * @param MediaService $mediaService
      */
-    public function __construct(private PostRepository $postRepository)
+    public function __construct(private PostRepository $postRepository, private MediaService $mediaService)
     {
     }
 
@@ -34,23 +37,60 @@ class PostService
      * Creates a post.
      *
      * @param array $data
-     * @return Model
+     * @param UploadedFile $file
+     * @return bool
      */
-    public function create(array $data): Model
+    public function create(array $data, UploadedFile $file): bool
     {
-        return $this->postRepository->create($data);
+        try {
+            DB::beginTransaction();
+
+            $post = $this->postRepository->create($data);
+
+            $this->mediaService->store($file, $post);
+
+            DB::commit();
+
+            return true;
+        } catch (Exception $exception) {
+            DB::rollBack();
+            report($exception);
+
+            return false;
+        }
     }
 
     /**
      * Updates a specified post.
      *
-     * @param array $data
      * @param Post $post
-     * @return int
+     * @param array $data
+     * @param UploadedFile|null $file
+     * @return bool
      */
-    public function update(array $data, Post $post): int
+    public function update(Post $post, array $data, ?UploadedFile $file): bool
     {
-        return $this->postRepository->update($post->id, $data);
+        try {
+            DB::beginTransaction();
+
+            $this->postRepository->update($post->id, $data);
+
+            if (!empty($file)) {
+                $media = $post->media;
+                $this->mediaService->removeFile(sprintf('%s/%s', $media->file_location, $media->file_original_name));
+                $post->media->delete();
+                $this->mediaService->store($file, $post);
+            }
+
+            DB::commit();
+
+            return true;
+        } catch (Exception $exception) {
+            DB::rollBack();
+            report($exception);
+
+            return false;
+        }
     }
 
     /**
@@ -61,6 +101,10 @@ class PostService
      */
     public function delete(Post $post): int
     {
+        $media = $post->media;
+        $this->mediaService->removeFile(sprintf('%s/%s', $media->file_location, $media->file_original_name));
+        $post->media->delete();
+
         return $this->postRepository->delete($post->id);
     }
 }
